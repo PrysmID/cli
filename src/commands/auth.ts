@@ -61,11 +61,11 @@ const whoami: LeafCommand = {
 Usage:
   prysmid whoami
 
-Calls /v1/users/me (or equivalent) on the active profile and prints the
-result. Exits non-zero if not authenticated.
+Calls /v1/auth/me on the active profile and prints the result. Exits
+non-zero if not authenticated.
 `,
   async run(_args, { client, cfg }: Ctx) {
-    const me = await client.request<unknown>("/v1/users/me").catch((e) => {
+    const me = await client.request<unknown>("/v1/auth/me").catch((e) => {
       throw e;
     });
     const cached = loadToken(cfg.apiBase, cfg.profile);

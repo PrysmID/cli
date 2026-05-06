@@ -74,7 +74,7 @@ Verifies that:
       try {
         const { PrysmidClient } = await import("../core/client.js");
         const c = new PrysmidClient(cfg, log, cached?.accessToken ?? null);
-        await c.request("/v1/users/me");
+        await c.request("/v1/auth/me");
         checks.push({ name: "api.authorized", ok: true, detail: "token accepted" });
       } catch (e) {
         const detail =

@@ -55,23 +55,96 @@ Examples:
   },
 };
 
+type ListResp = { items?: unknown[]; total?: number } | unknown[];
+
+function countItems(resp: ListResp): number {
+  if (Array.isArray(resp)) return resp.length;
+  if (typeof (resp as { total?: number }).total === "number") return (resp as { total: number }).total;
+  if (Array.isArray((resp as { items?: unknown[] }).items)) return (resp as { items: unknown[] }).items.length;
+  return 0;
+}
+
+interface SetupCheckItem {
+  ok: boolean;
+  name: string;
+  details?: string;
+}
+
 export const setupCheck: LeafCommand = {
   kind: "leaf",
   name: "setup-check",
-  summary: "Run platform setup diagnostics on a workspace.",
+  summary: "Run a readiness checklist on a workspace.",
   help: `
 Usage:
   prysmid setup-check --workspace <slug>
 
-Returns a checklist: Zitadel reachable, SMTP configured, login policy sane,
-custom domain DNS, etc.
+Returns pass/fail for: workspace state=active, ≥1 OIDC app, ≥1 IdP OR
+password+register enabled, branding primary_color set, login_policy MFA or
+external IdP. Mirrors the MCP curated tool prysmid_setup_check — composes
+reads against /workspaces, /apps, /idps, /login-policy, /branding.
 `,
   valueFlags: ["--workspace"],
   async run(args, { client }) {
     const ws = requireFlag(args, "--workspace");
-    return await client.request(
-      `/v1/workspaces/${encodeURIComponent(ws)}/setup-check`,
+    const enc = encodeURIComponent(ws);
+
+    const workspace = await client.request<{ state: string; auth_domain?: string }>(
+      `/v1/workspaces/${enc}`,
     );
+    const appsResp = await client.request<ListResp>(`/v1/workspaces/${enc}/apps`);
+    const idpsResp = await client.request<ListResp>(`/v1/workspaces/${enc}/idps`);
+    const policy = await client.request<{
+      allow_username_password?: boolean;
+      allow_register?: boolean;
+      allow_external_idp?: boolean;
+      force_mfa?: boolean;
+    }>(`/v1/workspaces/${enc}/login-policy`);
+    const branding = await client.request<{ primary_color?: string }>(
+      `/v1/workspaces/${enc}/branding`,
+    );
+
+    const appsCount = countItems(appsResp);
+    const idpsCount = countItems(idpsResp);
+    const passwordsOpen =
+      policy.allow_username_password === true && policy.allow_register === true;
+
+    const checks: SetupCheckItem[] = [
+      {
+        ok: workspace.state === "active",
+        name: "workspace_active",
+        details: `state=${workspace.state}`,
+      },
+      {
+        ok: appsCount > 0,
+        name: "has_at_least_one_app",
+        details: `${appsCount} apps`,
+      },
+      {
+        ok: idpsCount > 0 || passwordsOpen,
+        name: "users_can_sign_in",
+        details:
+          idpsCount > 0
+            ? `${idpsCount} idps`
+            : passwordsOpen
+              ? "no idps but username+password (with self-registration) allowed"
+              : "no idps; enable allow_username_password+allow_register or add an IdP",
+      },
+      {
+        ok: !!branding.primary_color,
+        name: "branding_primary_color_set",
+      },
+      {
+        ok: policy.force_mfa === true || idpsCount > 0,
+        name: "auth_strength_reasonable",
+        details: policy.force_mfa
+          ? "force_mfa=true"
+          : idpsCount > 0
+            ? `${idpsCount} external IdP(s) — strength delegated upstream`
+            : "MFA off and no external IdPs — passwords-only is weak",
+      },
+    ];
+    const verdict = checks.every((c) => c.ok) ? "ready" : "incomplete";
+    return { verdict, checks };
   },
 };
 
