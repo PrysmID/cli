@@ -88,6 +88,31 @@ prysmid describe-tools     # JSON manifest of every command
 
 See [AGENTS.md](./AGENTS.md).
 
+## Releasing (maintainers)
+
+No CI/CD by design — releases are cut manually from a local clone. Reason:
+the upstream workspace lives on a Google Drive mount whose long Windows UNC
+paths corrupt `npm install` postinstalls (esbuild, used by tsup). Until that
+constraint goes away, builds happen in a non-Drive checkout.
+
+```bash
+# one-time
+git clone https://github.com/PrysmID/cli ~/dev/prysmid-cli
+cd ~/dev/prysmid-cli
+npm install
+npm login    # or set _authToken in ~/.npmrc for the @prysmid scope
+
+# every release
+git pull
+./scripts/publish.sh patch          # 0.1.0 → 0.1.1
+./scripts/publish.sh --dry-run minor # rehearsal, no publish/push
+```
+
+The script enforces: clean tree, on `main`, in sync with origin, non-Drive
+cwd, smoke-tests the new build (`--version`, `describe-tools`) before
+publishing. On failure after `npm version`, see the recovery snippet at the
+top of `scripts/publish.sh`.
+
 ## License
 
 Apache-2.0.
