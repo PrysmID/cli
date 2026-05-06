@@ -1,0 +1,49 @@
+{
+  "name": "@prysmid/cli",
+  "version": "0.1.0",
+  "description": "Official Prysmid CLI — manage workspaces, OIDC apps, IdPs, login policy, branding, users and billing from any terminal, script, agent or CI.",
+  "license": "Apache-2.0",
+  "homepage": "https://prysmid.com",
+  "bugs": "https://github.com/PrysmID/cli/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PrysmID/cli.git"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "prysmid": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepare": "tsup"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  },
+  "keywords": [
+    "prysmid",
+    "cli",
+    "auth",
+    "oidc",
+    "zitadel",
+    "agents",
+    "iam"
+  ]
+}
