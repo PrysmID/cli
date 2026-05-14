@@ -69,6 +69,28 @@ prysmid login-policy get --workspace acme --json
 prysmid workspace delete acme --yes
 ```
 
+**Rotate an OIDC app's client_secret:**
+```
+# Bare secret on stdout, warning on stderr — pipe directly to a vault.
+prysmid app regenerate-secret app_123 --workspace acme --yes \
+  | gh secret set OIDC_CLIENT_SECRET --body -
+```
+
+**Update an IdP's secret without leaking it to shell history:**
+```
+printf '%s' "$NEW_SECRET" \
+  | prysmid idp update idp_123 --workspace acme --client-secret-from-stdin
+# or
+prysmid idp update idp_123 --workspace acme \
+  --client-secret-from-file ./secret.txt
+```
+`--client-secret <value>` is intentionally NOT a flag — it would persist in
+`history`, process listings, and CI logs.
+
+**PATCH semantics for list fields:** `app update` and `idp update` REPLACE
+list fields (`redirect_uris`, `scopes`, …) rather than append. Pass every
+member you want in the new list.
+
 ## Conventions
 
 - Every destructive command requires `--yes`.
