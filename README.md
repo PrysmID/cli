@@ -48,9 +48,17 @@ Windows). Survives across shells and reboots.
 
 ### Non-interactive (CI / scripts)
 ```bash
-export PRYSMID_API_TOKEN=pat_...
+export PRYSMID_API_TOKEN="$MY_ACCESS_TOKEN"
 prysmid workspace list
 ```
+
+> **There are no personal access tokens yet.** `PRYSMID_API_TOKEN` is sent
+> verbatim as `Authorization: Bearer`, and the only credential the API
+> accepts today is a Zitadel access token from the device flow — the one
+> `prysmid login` caches — which expires in ~12h. That covers a CI job
+> running inside the window; it does not cover an unattended server.
+> Workspace service accounts do not work here either: their token does not
+> authenticate against `api.prysmid.com`.
 
 ## Quick tour
 

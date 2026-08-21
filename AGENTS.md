@@ -11,6 +11,8 @@ Prysmid setup, this document is for you.
   JSON `{version, commands: [{path, summary, help, value_flags, no_auth}]}`.
 - Auth: `PRYSMID_API_TOKEN` env var **or** cached token from
   `prysmid login` (browser device flow). Status: `prysmid doctor`.
+  Both carry the same short-lived access token (~12h) — there is no PAT
+  issuance, so don't plan around an unattended long-running credential.
 - Output: stdout is data (JSON when piped, pretty when TTY); stderr is logs.
   Force JSON with `--json` or `-o json`.
 - Exit codes: 0 ok, 1 command failure, 2 unknown command/usage.
